@@ -1,0 +1,164 @@
+package br.ucb.bean;
+
+import java.io.Serializable;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+
+import org.hibernate.HibernateException;
+import org.hibernate.ObjectNotFoundException;
+import org.hibernate.exception.ConstraintViolationException;
+
+import br.ucb.dao.HibernateDAO;
+import br.ucb.pojo.Acesso;
+
+public class AcessoBean implements Serializable {
+	private static final long serialVersionUID = 1L;
+	private Acesso acesso;
+	private String eMail;
+	private String eSenha;
+	
+	public AcessoBean() {
+		super();
+		acesso = new Acesso();
+	}
+
+	public void incluir(ActionEvent event) {
+		try {
+			HibernateDAO<Acesso, String> regHBR = new HibernateDAO<Acesso, String>(
+					Acesso.class);
+			if (regHBR.inclui(acesso)) {
+				FacesContext context = FacesContext.getCurrentInstance();
+				context.addMessage(null, new FacesMessage(
+						FacesMessage.SEVERITY_INFO, "INFO!Incluído.",
+						"Registro incluido com sucesso."));
+			}
+		} catch (ConstraintViolationException e) {
+			FacesContext context = FacesContext.getCurrentInstance();
+			context.addMessage(null, new FacesMessage(
+					FacesMessage.SEVERITY_ERROR, "ERRO!Chave estrangeira.",
+					"Chave primária já existe. Registro duplicado."));
+			e.printStackTrace();
+		} catch (HibernateException e) {
+			FacesContext context = FacesContext.getCurrentInstance();
+			context.addMessage(null, new FacesMessage(
+					FacesMessage.SEVERITY_ERROR, "ERRO!Acesso ao Banco de Dados",
+					"Falha na inclusão dos dados."));
+			e.printStackTrace();
+		}
+	}
+
+	public void excluir(ActionEvent event) {
+		try {
+			HibernateDAO<Acesso, String> regHBR2 = new HibernateDAO<Acesso, String>(
+					Acesso.class);
+			acesso = (Acesso) regHBR2.consulta(acesso.getEmail());
+			if (regHBR2.exclui(acesso)) {
+				FacesContext context = FacesContext.getCurrentInstance();
+				context.addMessage(null, new FacesMessage(
+						FacesMessage.SEVERITY_INFO, "INFO! Registro excluído.",
+						"Registro excluído com sucesso."));
+			}
+		} catch (ObjectNotFoundException e) {
+			FacesContext context = FacesContext.getCurrentInstance();
+			context.addMessage(null, new FacesMessage(
+					FacesMessage.SEVERITY_ERROR, "ERRO! Objeto não localizado.",
+					"Objeto não localizado."));
+			e.printStackTrace();
+		} catch (HibernateException e) {
+			FacesContext context = FacesContext.getCurrentInstance();
+			context.addMessage(null, new FacesMessage(
+					FacesMessage.SEVERITY_ERROR, "ERRO! Acesso ao Banco de Dados.",
+					"Falha na exclusão dos dados."));
+			e.printStackTrace();
+		}
+	}
+
+	public void alterar(ActionEvent event) {
+		try {
+			HibernateDAO<Acesso, String> regHBR = new HibernateDAO<Acesso, String>(Acesso.class);
+			if (regHBR.altera(acesso)) {
+				FacesContext context = FacesContext.getCurrentInstance();
+				context.addMessage(null, new FacesMessage(
+						FacesMessage.SEVERITY_INFO, "INFO!","Registro alterado com sucesso."));
+			}
+		} catch (ObjectNotFoundException e) {
+			FacesContext context = FacesContext.getCurrentInstance();
+			context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERRO!","Objeto não localizado."));
+			e.printStackTrace();
+		} catch (HibernateException e) {
+			FacesContext context = FacesContext.getCurrentInstance();
+			context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERRO!","Falha na exclusão dos dados."));
+			e.printStackTrace();
+		}
+	}
+
+	public String login() {
+		try {
+			HibernateDAO<Acesso, String> regHBR = new HibernateDAO<Acesso, String>(Acesso.class);
+			acesso = (Acesso) regHBR.consulta(eMail);
+			if ((this.eMail.equals(acesso.getEmail())) && (this.eSenha.equals(acesso.getSenha())))
+				return "sucesso";
+		//	else{
+		//		return "erro";
+		//	}
+//			} catch (HibernateException e) {
+//					FacesContext context = FacesContext.getCurrentInstance();
+//					context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERRO!","Falha de consulta aos dados."));
+//					e.printStackTrace();
+			} catch (ObjectNotFoundException e) {
+				FacesContext context = FacesContext.getCurrentInstance();
+				context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "ERRO!","Objeto não localizado."));
+				e.printStackTrace();
+			}
+		return "erro";
+}
+
+	public String validaLogin(ActionEvent event) {
+		try {
+			HibernateDAO<Acesso, String> regHBR = new HibernateDAO<Acesso, String>(Acesso.class);
+			Acesso acessoValidacao = (Acesso) regHBR.consulta(acesso.getEmail());
+			if (acessoValidacao.equals(acesso))
+				return "sucesso";
+		} catch (HibernateException e) {
+			FacesContext context = FacesContext.getCurrentInstance();
+			context.addMessage(null, new FacesMessage(
+					FacesMessage.SEVERITY_ERROR, "ERRO!",
+					"Falha de consulta aos dados."));
+			e.printStackTrace();
+		}
+		return "insucesso";
+	}
+
+	public String logout(){
+		eMail = "";
+		eSenha = "";
+		acesso = null;
+		return "fim";
+	}
+	
+	public Acesso getAcesso() {
+		return acesso;
+	}
+
+	public void setAcesso(Acesso acesso) {
+		this.acesso = acesso;
+	}
+
+	public String geteMail() {
+		return eMail; 
+	}
+
+	public void seteMail(String eMail) {
+		this.eMail = eMail;
+	}
+
+	public String geteSenha() {
+		return eSenha;
+	}
+
+	public void seteSenha(String eSenha) {
+		this.eSenha = eSenha;
+	}
+}
